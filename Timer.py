@@ -3,7 +3,6 @@ import time
 class Timer:
     def __init__(self):
         self._passed = time.time()
-        print(time.time())
         
     def time_passed(self):
         return time.time() - self._passed
