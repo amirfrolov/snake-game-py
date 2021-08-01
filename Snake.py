@@ -1,5 +1,4 @@
 from collections import deque
-from searchTable import Table
 from Timer import Timer
 import pygame
 import random
@@ -16,6 +15,7 @@ TABLE_SIZE = [42, 28]
 BLACK = (0,0,0)
 BODY_COLOR = (50,164,231)   #blue
 HEAD_COLOR = (255, 0, 0)    #red
+APPLE_COLOR = (0,255,0)     #green
 
 BACKGROUND_BLOCK_TOUNE = 0
 BACKGROUND_BLOCK_COLOR = (BACKGROUND_BLOCK_TOUNE,BACKGROUND_BLOCK_TOUNE,BACKGROUND_BLOCK_TOUNE)
@@ -23,6 +23,7 @@ BACKGROUND_BLOCK_COLOR = (BACKGROUND_BLOCK_TOUNE,BACKGROUND_BLOCK_TOUNE,BACKGROU
 BODY_SIZE = 0.9
 BACKGROUND_SIZE = 0.8
 
+APPLE_ID = -1
 
 def block(win, place, relative_size, color):
     # set x
@@ -37,37 +38,32 @@ def block(win, place, relative_size, color):
     pygame.draw.rect(win, BLACK, (x, y, x_size, y_size))
     pygame.draw.rect(win, color, (x + x_hist/2, y+ y_hist/2, x_size * relative_size, y_size * relative_size))
 
-def draw_background(win):
-    win.fill((0,0,0))
-    """
-    for x in range(TABLE_SIZE[0]):
-        for y in range(TABLE_SIZE[1]):
-            block(win, (x, y), BACKGROUND_SIZE, BACKGROUND_BLOCK_COLOR)
-    """
-
-def get_random_point():
-    return (random.randrange(0,TABLE_SIZE[0]), random.randrange(0,TABLE_SIZE[1]))
-
-def new_apple(win, snake_list, color):
+get_random_point = lambda : (random.randrange(0,TABLE_SIZE[0]), random.randrange(0,TABLE_SIZE[1]))
+def new_apple(win, game_table, color):
     new_apple = get_random_point()
-    while any([i.is_interappted(new_apple) for i in snake_list]):
+    while game_table[new_apple[0]][new_apple[1]]:
         new_apple = get_random_point()
+    game_table[new_apple[0]][new_apple[1]] = APPLE_ID
     #draws the apple
     block(win, new_apple, BACKGROUND_SIZE, color)
-    return new_apple
 
 class Snake:
-    def __init__(self, values_list, body_color = BODY_COLOR, speed = 10):
+    def __init__(self, game_table, values_list, body_color = BODY_COLOR, speed = 10, snake_id = 1):
+        self.id = snake_id
+        self.game_table = game_table
+        for i in values_list:
+            self.game_table[i[0]][i[1]] = self.id
         self.size = len(values_list)
         self.deque_list = deque(values_list)
-        self.seach_table = Table(values_list)
         self.direction_list = deque()
         self.direction = None
-        self.head = None
+        #TODO replace with get_head 
         self.timer = Timer()
         self.speed = speed
-        #colors
         self.body_color = body_color
+        #flages
+        self.alive = True
+        self.apple_eaten = False
     
     def draw_all(self, win):
         head = self.deque_list.pop()
@@ -75,17 +71,9 @@ class Snake:
             block(win, i, BODY_SIZE, self.body_color)
         block(win, head, BODY_SIZE, HEAD_COLOR)
         self.deque_list.append(head)
-    """
-    def grow(self):
-        self.size+=1
-        last_body = self.deque_list[0]
-        self.deque_list.appendleft(last_body)
-    """
-    def is_interappted(self, point):
-        return self.seach_table.find(point) or point == self.head
     
     def get_head(self):
-        return self.head
+        return self.deque_list[-1]
     
     def add_direction(self, key):
         if key == pygame.K_a or key == pygame.K_LEFT:
@@ -118,25 +106,24 @@ class Snake:
         """returns if the snake moved"""
         if self.direction and self.speed:
             if self.timer.loop(1/self.speed):
+                """
                 if self.head:
                     self.deque_list.append(self.head)
                     self.seach_table.insert(self.head)
-                    
+                """
                 if self.size == len(self.deque_list):
                     #delete the last place
                     last_place = self.deque_list.popleft()
-                    self.seach_table.remove(last_place)
+                    self.game_table[last_place[0]][last_place[1]] = 0
                     #draw on the last place
                     block(win, last_place, BACKGROUND_SIZE, BACKGROUND_BLOCK_COLOR)
-                
                 #remove the last head
-                head = self.deque_list[-1]
+                head = list(self.get_head())
                 block(win, head, BODY_SIZE, self.body_color)
                 #set the new direction
                 if self.direction_list:
                     self.direction = self.direction_list.popleft()
                 #set the new head
-                head = list(head)
                 if self.direction == 'u':
                     head[1]-=1
                 elif self.direction == 'd':
@@ -152,24 +139,27 @@ class Snake:
                             head[i] = TABLE_SIZE[i] - 1
                         elif head[i] == TABLE_SIZE[i]:
                             head[i] = 0
-                
-                head = tuple(head)
-                #draw the new head
-                block(win, head, BODY_SIZE, HEAD_COLOR)
-                #add the new head
-                self.head = head
+                #check if the snake got out of the borders
+                if borders:
+                    self.alive = not (head[0] < 0 or head[0] == TABLE_SIZE[0] or head[1] < 0 or head[1] == TABLE_SIZE[1])
+                if not borders or (borders and self.alive):
+                    #draw the new head
+                    block(win, head, BODY_SIZE, HEAD_COLOR)
+                    #eat apple
+                    self.apple_eaten = self.game_table[head[0]][head[1]] == APPLE_ID
+                    if self.apple_eaten:
+                        self.size += 1
+                        new_apple(win, self.game_table, APPLE_COLOR)
+                    else:
+                        #check if alive
+                        self.alive = self.game_table[head[0]][head[1]] == 0
+                    #add the new head
+                    self.game_table[head[0]][head[1]] = self.id
+                    self.deque_list.append(head)
                 return True
         else:
             self.timer.reset()
         return False
-    
-    def is_alive(self, borders = False):
-        head = self.head
-        alive = not self.seach_table.find(head)
-        #check if the snake got out of the borders
-        if borders and alive:
-            alive = not (head[0] < 0 or head[0] == TABLE_SIZE[0] or head[1] < 0 or head[1] == TABLE_SIZE[1])
-        return alive
         
         
 
