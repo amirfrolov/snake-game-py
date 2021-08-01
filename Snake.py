@@ -57,8 +57,7 @@ def new_apple(win, snake_list, color):
     return new_apple
 
 class Snake:
-    def __init__(self, values_list, body_color = BODY_COLOR, speed = 10, id = 0):
-        self.id = id
+    def __init__(self, values_list, body_color = BODY_COLOR, speed = 10):
         self.size = len(values_list)
         self.deque_list = deque(values_list)
         self.seach_table = Table(values_list)
