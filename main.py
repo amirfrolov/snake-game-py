@@ -3,9 +3,9 @@ import time
 import pygame
 import Snake
 
-import __main__
-SCRIPT_FILE = __main__.__file__
-PATH = "/".join(SCRIPT_FILE.replace("\\", "/").split("/")[:-1]) + '/'
+PATH = os.path.dirname(__file__)
+if PATH:
+    PATH += '/'
 
 LINE_CLEAR_LEN_STR = " "*30
 #           height / width
