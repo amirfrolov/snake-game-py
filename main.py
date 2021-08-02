@@ -40,6 +40,9 @@ def main():
         #snake start location
         main_snake = Snake.Snake(game_table, [[2, 3], [2, 4], [2, 5]],SNAKE_COLOR, 0)
         main_snake.draw_all(win)
+        if "server" in sys.argv:
+            second_snake = Snake.Snake(game_table, [[5, 3], [5, 4], [5, 5]],(0, 0, 255), 1)
+            second_snake.draw_all(win)
         #set snake start length
         if START_LEN > main_snake.size:
             main_snake.size = START_LEN
@@ -47,12 +50,12 @@ def main():
         #set apple
         apple = Snake.new_apple(win, game_table, APPLE_COLOR)
         pygame.display.update()
+        update_display = False
         game_loop = True
         while game_loop:
             #manage the keyboard
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    main_snake.add_direction(event.key)
                     if event.key == pygame.K_ESCAPE:
                         run = False
                         game_loop = False
@@ -60,6 +63,22 @@ def main():
                         game_loop = False
                     elif event.key == pygame.K_g:
                         main_snake.size += 1
+                    #snake direction keys
+                    new_direction = False
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                        new_direction = Snake.DIRECTION_LEFT
+                    elif event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                        new_direction = Snake.DIRECTION_RIGHT
+                    elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                        new_direction = Snake.DIRECTION_DOWN
+                    elif event.key == pygame.K_w or event.key == pygame.K_UP:
+                        new_direction = Snake.DIRECTION_UP
+                    if new_direction:
+                        main_snake.add_direction(new_direction)
+                        if "server" in sys.argv and not second_snake.direction:
+                            second_snake.direction = Snake.DIRECTION_DOWN
+                    elif event.key == pygame.K_p:
+                        main_snake.stop()
                 if event.type == pygame.QUIT:
                     run = False
                     game_loop = False
@@ -69,15 +88,28 @@ def main():
                 main_snake.speed = SNAKE_SPEED_RUN
             else:
                 main_snake.speed = SNAKE_SPEED
-            #move the snake
+            #move the main snake
             if main_snake.move(win, borders = BORDERS):
-                game_loop = main_snake.alive
+                if game_loop:
+                    game_loop = main_snake.alive
                 if main_snake.apple_eaten:
+                    Snake.new_apple(win, game_table)
                     eat_sound.play()
                 #print the score
                 print(LINE_CLEAR_LEN_STR, end="\r")
                 print("score:", main_snake.size,"speed:", main_snake.speed , end = "\r")
+                update_display = True
+            #move the second snake
+            if "server" in sys.argv and second_snake.move(win, borders = BORDERS):
+                if game_loop:
+                    game_loop = second_snake.alive
+                if second_snake.apple_eaten:
+                    Snake.new_apple(win, game_table)
+                update_display = True
+            #update the display
+            if update_display:
                 pygame.display.update()
+                update_display = False
             time.sleep(0.01)
         time.sleep(0.3)
         if run:
