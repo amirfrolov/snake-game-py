@@ -44,7 +44,7 @@ def main():
         win.fill((0,0,0))
         game_table = [[0 for i in range(TABLE_SIZE[1])] for j in range(TABLE_SIZE[0])]
         #snake start location
-        main_snake = Snake.Snake(game_table, [[2, 3], [2, 4], [2, 5]],SNAKE_COLOR, 0)
+        main_snake = Snake.Snake(game_table, SETTINGS["snake_start_posotions"],SNAKE_COLOR, 0)
         main_snake.draw_all(win)
         if "server" in sys.argv:
             second_snake = Snake.Snake(game_table, [[5, 3], [5, 4], [5, 5]],(0, 0, 255), 1)
