@@ -1,0 +1,6 @@
+{
+    "snake_speed" : 10,
+    "snake_speed_run" : 20,
+    "snake_start_length" : 5,
+    "game_borders" : false
+}

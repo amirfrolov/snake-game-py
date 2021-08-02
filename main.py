@@ -1,5 +1,6 @@
 ﻿import sys, os
 import time
+import json
 import pygame
 import Snake
 
@@ -7,15 +8,20 @@ PATH = os.path.dirname(__file__)
 if PATH:
     PATH += '/'
 
+RUN = True
+SETTINGS = json.loads("{}")
+try:
+    with open("settings.json", "r") as settings_file:
+        SETTINGS = json.loads(settings_file.read())
+except FileNotFoundError:
+    print("settings.json file not found.")
+    RUN = False 
+
 LINE_CLEAR_LEN_STR = " "*30
 #           height / width
 SCREEN_SIZE = (800, 800)
 TABLE_SIZE = [28, 28]
-#snake 
-SNAKE_SPEED = 10
-SNAKE_SPEED_RUN = 20
-START_LEN = 5
-BORDERS = False
+
 #colors
 APPLE_COLOR = (0,255,0)     #green
 SNAKE_COLOR = (255,255,255)
@@ -44,8 +50,8 @@ def main():
             second_snake = Snake.Snake(game_table, [[5, 3], [5, 4], [5, 5]],(0, 0, 255), 1)
             second_snake.draw_all(win)
         #set snake start length
-        if START_LEN > main_snake.size:
-            main_snake.size = START_LEN
+        if SETTINGS["snake_start_length"] > main_snake.size:
+            main_snake.size = SETTINGS["snake_start_length"]
         print("score:", main_snake.size, end = "\r")
         #set apple
         apple = Snake.new_apple(win, game_table, APPLE_COLOR)
@@ -85,11 +91,11 @@ def main():
             pressed_keys = pygame.key.get_pressed()
             #run if space is pressed
             if pressed_keys[pygame.K_SPACE]:
-                main_snake.speed = SNAKE_SPEED_RUN
+                main_snake.speed = SETTINGS["snake_speed_run"]
             else:
-                main_snake.speed = SNAKE_SPEED
+                main_snake.speed = SETTINGS["snake_speed"]
             #move the main snake
-            if main_snake.move(win, borders = BORDERS):
+            if main_snake.move(win, borders = SETTINGS["game_borders"]):
                 if game_loop:
                     game_loop = main_snake.alive
                 if main_snake.apple_eaten:
@@ -100,7 +106,7 @@ def main():
                 print("score:", main_snake.size,"speed:", main_snake.speed , end = "\r")
                 update_display = True
             #move the second snake
-            if "server" in sys.argv and second_snake.move(win, borders = BORDERS):
+            if "server" in sys.argv and second_snake.move(win, borders = SETTINGS["game_borders"]):
                 if game_loop:
                     game_loop = second_snake.alive
                 if second_snake.apple_eaten:
@@ -120,5 +126,5 @@ def main():
     print("stopped, score:", main_snake.size)
     return None
 
-if __name__ == "__main__":
+if __name__ == "__main__" and RUN:
     main()
