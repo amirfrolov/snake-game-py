@@ -1,53 +1,32 @@
 from collections import deque
 from Timer import Timer
 import pygame
-import random
+import Canvas
 
 DIRECTION_RIGHT = 'r'
 DIRECTION_LEFT = 'l'
 DIRECTION_UP = 'u'
 DIRECTION_DOWN = 'd'
 
-#           height / width
-SCREEN_SIZE = (1200, 800)
-TABLE_SIZE = [42, 28]
-#colors
-BLACK = (0,0,0)
 HEAD_COLOR = (255, 0, 0)    #red
-APPLE_COLOR = (0,255,0)     #green
 #sizes
 BODY_SIZE = 0.9
-APPLE_SIZE = 0.8
-
 APPLE_ID = -1
 
-def block(win, place, relative_size = 1, color = None):
-    # set x
-    x_size = (SCREEN_SIZE[0]/TABLE_SIZE[0])
-    x_hist = x_size * (1 - relative_size)
-    x = x_size* place[0]
-    # set y
-    y_size = (SCREEN_SIZE[1]/TABLE_SIZE[1])
-    y_hist = y_size * (1 - relative_size)
-    y = y_size * place[1]
-    #draw
-    pygame.draw.rect(win, BLACK, (x, y, x_size, y_size))
-    if color:
-        pygame.draw.rect(win, color, (x + x_hist/2, y+ y_hist/2, x_size * relative_size, y_size * relative_size))
-
-get_random_point = lambda : (random.randrange(0,TABLE_SIZE[0]), random.randrange(0,TABLE_SIZE[1]))
-def new_apple(win, game_table, color = APPLE_COLOR):
-    new_apple = get_random_point()
-    while game_table[new_apple[0]][new_apple[1]]:
-        new_apple = get_random_point()
-    game_table[new_apple[0]][new_apple[1]] = APPLE_ID
-    #draws the apple
-    block(win, new_apple, APPLE_SIZE, color)
-
 class Snake:
-    def __init__(self, game_table, values_list, body_color, speed = 10, snake_id = 1):
+    def __init__(self, game_canvas, values_list, body_color, speed = 10, snake_id = 1):
+        """[summary]TODO
+        
+        Args:
+            game_canvas (Canvas): the game canvas
+            values_list ([type]): [description]
+            body_color ([type]): [description]
+            speed (int, optional): [description]. Defaults to 10.
+            snake_id (int, optional): [description]. Defaults to 1.
+        """
+        self.__canvas = game_canvas
         self.id = snake_id
-        self.game_table = game_table
+        self.game_table = game_canvas.game_table
         #set the snake in the game_table
         for i in values_list:
             self.game_table[i[0]][i[1]] = self.id
@@ -62,12 +41,13 @@ class Snake:
         #flages
         self.alive = True
         self.apple_eaten = False
+        self.draw_all()
     
-    def draw_all(self, win):
+    def draw_all(self):
         head = self.deque_list.pop()
         for i in self.deque_list:
-            block(win, i, BODY_SIZE, self.body_color)
-        block(win, head, BODY_SIZE, HEAD_COLOR)
+            self.__canvas.block(i, BODY_SIZE, self.body_color)
+        self.__canvas.block(head, BODY_SIZE, HEAD_COLOR)
         self.deque_list.append(head)
     
     def get_head(self):
@@ -103,7 +83,7 @@ class Snake:
     def stop(self):
         self.direction = None
 
-    def move(self, win, borders = False):
+    def move(self, borders = False):
         """returns if the snake moved"""
         if self.direction and self.speed:
             if self.timer.loop(1/self.speed):
@@ -112,10 +92,10 @@ class Snake:
                     last_place = self.deque_list.popleft()
                     self.game_table[last_place[0]][last_place[1]] = 0
                     #draw on the last place
-                    block(win, last_place)
+                    self.__canvas.block(last_place)
                 #remove the last head
                 head = self.get_head()
-                block(win, head, BODY_SIZE, self.body_color)
+                self.__canvas.block(head, BODY_SIZE, self.body_color)
                 #set the new direction
                 if self.direction_list:
                     self.direction = self.direction_list.popleft()
@@ -132,20 +112,22 @@ class Snake:
                 if not borders:
                     for i in range(2):
                         if head[i] < 0:
-                            head[i] = TABLE_SIZE[i] - 1
-                        elif head[i] == TABLE_SIZE[i]:
+                            head[i] = self.__canvas.table_size[i] - 1
+                        elif head[i] == self.__canvas.table_size[i]:
                             head[i] = 0
                 #check if the snake got out of the borders
                 if borders:
-                    self.alive = not (head[0] < 0 or head[0] == TABLE_SIZE[0] or head[1] < 0 or head[1] == TABLE_SIZE[1])
+                    self.alive = not (head[0] < 0 or head[0] == self.__canvas.table_size[0] or head[1] < 0 or head[1] == self.__canvas.table_size[1])
                 if not borders or (borders and self.alive):
                     #draw the new head
-                    block(win, head, BODY_SIZE, HEAD_COLOR)
+                    self.__canvas.block(head, BODY_SIZE, HEAD_COLOR)
                     #eat apple
                     self.apple_eaten = self.game_table[head[0]][head[1]] == APPLE_ID
+                    
                     if self.apple_eaten:
-                        self.size += 1
-                    else:
+                        #self.size += 1
+                        pass
+                    else: #if the snake has eaten an apple the squere is not 0
                         #check if alive
                         self.alive = self.game_table[head[0]][head[1]] == 0
                     #add the new head

@@ -1,5 +1,5 @@
 import time
-#prog_time = lambda: time.time()
+
 class Timer:
     def __init__(self):
         self._passed = time.time()

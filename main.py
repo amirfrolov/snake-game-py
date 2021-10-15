@@ -1,129 +1,104 @@
-﻿import sys, os
-import time
-import json
+﻿import os
+from time import sleep
+import socket #for the online
 import pygame
+from os.path import abspath #for opening files
+os.chdir(os.path.dirname(__file__)) #set the path for opening files
+#local imports
 import Snake
-
-PATH = os.path.dirname(__file__)
-if PATH:
-    PATH += '/'
-
-RUN = True
-SETTINGS = json.loads("{}")
-try:
-    with open("settings.json", "r") as settings_file:
-        SETTINGS = json.loads(settings_file.read())
-except FileNotFoundError:
-    print("settings.json file not found.")
-    RUN = False 
-
-LINE_CLEAR_LEN_STR = " "*30
-#           height / width
-SCREEN_SIZE = (800, 800)
-TABLE_SIZE = [28, 28]
-
-#colors
-APPLE_COLOR = (0,255,0)     #green
-SNAKE_COLOR = (255,255,255)
-
-Snake.SCREEN_SIZE = SCREEN_SIZE
-Snake.TABLE_SIZE = TABLE_SIZE
-
+import Canvas
+import GameEvents
+import PrintManager
+from settings import SETTINGS
+#define
+RUN = SETTINGS != None
+#---------- main ----------#
 def main():
-    print("Suonds from: https://mixkit.co/free-sound-effects/game/")
+    print_obj = PrintManager.PrintManager()
+    print_obj.new_line("Suonds from: https://mixkit.co/free-sound-effects/game/")
+    if SETTINGS["online"]:
+        socket_port = SETTINGS["defult_port"]
+    #set pygame
     pygame.init()
     #set sounds
-    eat_sound = pygame.mixer.Sound(PATH + 'mixkit-unlock-game-notification-253.wav')
+    eat_sound = pygame.mixer.Sound(abspath(SETTINGS['eat_sound']))
     eat_sound.set_volume(0.5)
     eat_sound.play()
-    #set the window
-    win = pygame.display.set_mode(SCREEN_SIZE)
-    pygame.display.set_caption("snake game")
+    #set canvas
+    game_canvas = Canvas.Canvas(SETTINGS["game_table"], SETTINGS["game_screen"], "snake game")
+    #set game
+    game_count = 1
     run = True
     while run:
-        win.fill((0,0,0))
-        game_table = [[0 for i in range(TABLE_SIZE[1])] for j in range(TABLE_SIZE[0])]
-        #snake start location
-        main_snake = Snake.Snake(game_table, SETTINGS["snake_start_posotions"],SNAKE_COLOR, 0)
-        main_snake.draw_all(win)
-        if "server" in sys.argv:
-            second_snake = Snake.Snake(game_table, [[5, 3], [5, 4], [5, 5]],(0, 0, 255), 1)
-            second_snake.draw_all(win)
+        game_canvas.reset()
+        main_snake = Snake.Snake(game_canvas, SETTINGS["snake_start_posotions"], SETTINGS['snake_color'])
+        """
+        if SETTINGS["online"]:
+            second_snake = Snake(game_canvas, [[5, 3], [5, 4], [5, 5]],(0, 0, 255), 2)
+        """
         #set snake start length
         if SETTINGS["snake_start_length"] > main_snake.size:
             main_snake.size = SETTINGS["snake_start_length"]
+        
         print("score:", main_snake.size, end = "\r")
-        #set apple
-        apple = Snake.new_apple(win, game_table, APPLE_COLOR)
-        pygame.display.update()
-        update_display = False
+        game_canvas.new_apple()
+        game_canvas.update()
+        #the game loop
         game_loop = True
         while game_loop:
             #manage the keyboard
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        run = False
+            game_event = GameEvents.handle_pygame_events(pygame.event.get(), pygame.key.get_pressed())
+            
+            if game_event.close_game:
+                run = False
+                game_loop = False
+            elif game_event.restart:
+                game_loop = False
+            else: #continue the game
+                if game_event.pause:
+                    main_snake.stop()
+                if game_event.new_direction:
+                    main_snake.add_direction(game_event.new_direction)
+                    """
+                    if SETTINGS["online"] and not second_snake.direction:
+                        second_snake.direction = Snake.DIRECTION_DOWN
+                    """
+
+                if game_event.sprint:
+                    main_snake.speed = SETTINGS["snake_speed_run"]
+                else:
+                    main_snake.speed = SETTINGS["snake_speed"]
+                
+                #move the main snake
+                if main_snake.move(borders = SETTINGS["game_borders"]): # the snake moved
+                    if main_snake.alive:
+                        if main_snake.apple_eaten:
+                            game_canvas.new_apple()
+                            eat_sound.play()
+                            game_event.grow = True
+                        if game_event.grow:
+                            main_snake.size += 1
+                        #print the score
+                        print_obj.on_line(f"score: {main_snake.size} speed: {main_snake.speed}")
+                    if SETTINGS["god_mode"]:
+                        main_snake.draw_all()
+                    elif not main_snake.alive:
                         game_loop = False
-                    elif event.key == pygame.K_r:
+                #move the second snake
+                """
+                if SETTINGS["online"] and second_snake.move(borders = SETTINGS["game_borders"]):
+                    if not second_snake.alive:
                         game_loop = False
-                    elif event.key == pygame.K_g:
-                        main_snake.size += 1
-                    #snake direction keys
-                    new_direction = False
-                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                        new_direction = Snake.DIRECTION_LEFT
-                    elif event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                        new_direction = Snake.DIRECTION_RIGHT
-                    elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
-                        new_direction = Snake.DIRECTION_DOWN
-                    elif event.key == pygame.K_w or event.key == pygame.K_UP:
-                        new_direction = Snake.DIRECTION_UP
-                    if new_direction:
-                        main_snake.add_direction(new_direction)
-                        if "server" in sys.argv and not second_snake.direction:
-                            second_snake.direction = Snake.DIRECTION_DOWN
-                    elif event.key == pygame.K_p:
-                        main_snake.stop()
-                if event.type == pygame.QUIT:
-                    run = False
-                    game_loop = False
-            pressed_keys = pygame.key.get_pressed()
-            #run if space is pressed
-            if pressed_keys[pygame.K_SPACE]:
-                main_snake.speed = SETTINGS["snake_speed_run"]
-            else:
-                main_snake.speed = SETTINGS["snake_speed"]
-            #move the main snake
-            if main_snake.move(win, borders = SETTINGS["game_borders"]):
-                if game_loop:
-                    game_loop = main_snake.alive
-                if main_snake.apple_eaten:
-                    Snake.new_apple(win, game_table)
-                    eat_sound.play()
-                #print the score
-                print(LINE_CLEAR_LEN_STR, end="\r")
-                print("score:", main_snake.size,"speed:", main_snake.speed , end = "\r")
-                update_display = True
-            #move the second snake
-            if "server" in sys.argv and second_snake.move(win, borders = SETTINGS["game_borders"]):
-                if game_loop:
-                    game_loop = second_snake.alive
-                if second_snake.apple_eaten:
-                    Snake.new_apple(win, game_table)
-                update_display = True
-            #update the display
-            if update_display:
-                pygame.display.update()
-                update_display = False
-            time.sleep(0.01)
-        time.sleep(0.3)
-        if run:
-            print(LINE_CLEAR_LEN_STR, end="\r")
-            print("restarted, score:", main_snake.size)
+                    if second_snake.apple_eaten:
+                        game_canvas.new_apple()
+                """
+                #update the display
+                game_canvas.update()
+                sleep(0.01)
+        sleep(0.3)
+        print_obj.new_line(f"game {game_count}, score: {main_snake.size}")
+        game_count += 1
     pygame.quit()
-    print(LINE_CLEAR_LEN_STR, end="\r")
-    print("stopped, score:", main_snake.size)
     return None
 
 if __name__ == "__main__" and RUN:
