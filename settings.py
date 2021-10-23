@@ -25,15 +25,21 @@ def get_settings(settings_file_path):
             ARGV.append(i) 
     
     i_max = len(settings_argv)
-    i = 0
-    while i < i_max:
-        setting = settings_argv[i]
-        if setting.startswith("-"):
-            value = settings_argv[i+1]
+    try:
+        i = 0
+        while i < i_max:
+            setting = settings_argv[i]
+            if setting.startswith("-"):
+                value = settings_argv[i+1]
+                i+=1
+                try:
+                    value = json.loads(value)
+                except json.decoder.JSONDecodeError:
+                    value = json.loads(f'"{value}"')
+                settings_result[setting[1:]] = value
             i+=1
-            settings_result[setting[1:]] = json.loads(value)
-        i+=1
-    
+    except IndexError:
+        pass
     return settings_result
 
 #get the settings from settings.json file

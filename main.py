@@ -1,4 +1,5 @@
-﻿import os
+﻿#!/usr/bin/env python3
+import os
 from time import sleep
 import socket #for the online
 import pygame
@@ -9,17 +10,50 @@ import Snake
 import Canvas
 import GameEvents
 import PrintManager
-from settings import SETTINGS
+from settings import SETTINGS, ARGV
 #define
 RUN = SETTINGS != None
+if RUN:
+    if "server" in ARGV:
+        SETTINGS["server"] == True
+    HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+
+def manage_snake(snake, game_events, god_mode=False):
+    if game_events.pause:
+        snake.stop()
+    if game_events.new_direction:
+        snake.add_direction(game_events.new_direction)
+    if game_events.sprint:
+        snake.speed = SETTINGS["snake_speed_run"]
+    else:
+        snake.speed = SETTINGS["snake_speed"]
+    
+    grow = game_events.grow
+    snake_moved = snake.move()
+    if snake_moved:
+        if snake.alive:
+            if snake.apple_eaten:
+                snake.canvas.new_apple()
+                grow = True
+            if grow:
+                snake.size += 1
+        if god_mode:
+            snake.draw_all()
+            snake.alive = True
+    return snake_moved
+
 #---------- main ----------#
 def main():
     print_obj = PrintManager.PrintManager()
     print_obj.new_line("Suonds from: https://mixkit.co/free-sound-effects/game/")
-    if SETTINGS["online"]:
-        socket_port = SETTINGS["defult_port"]
-    #set pygame
-    pygame.init()
+    #set online
+    if SETTINGS["server"]: # server socket
+        online_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        online_socket.bind((HOST, SETTINGS["port"]))
+        online_socket.listen()
+        print("waitting for connection...")
+        socket_conn, addr = online_socket.accept()
+        socket_conn.settimeout(1/50)
     #set sounds
     eat_sound = pygame.mixer.Sound(abspath(SETTINGS['eat_sound']))
     eat_sound.set_volume(0.5)
@@ -31,75 +65,86 @@ def main():
     run = True
     while run:
         game_canvas.reset()
-        main_snake = Snake.Snake(game_canvas, SETTINGS["snake_start_posotions"], SETTINGS['snake_color'])
-        """
-        if SETTINGS["online"]:
-            second_snake = Snake(game_canvas, [[5, 3], [5, 4], [5, 5]],(0, 0, 255), 2)
-        """
-        #set snake start length
-        if SETTINGS["snake_start_length"] > main_snake.size:
-            main_snake.size = SETTINGS["snake_start_length"]
-        
-        print("score:", main_snake.size, end = "\r")
+        main_snake = Snake.Snake(game_canvas,\
+            SETTINGS["snake_start_posotions"],\
+            SETTINGS['snake_color'],\
+            SETTINGS["snake_start_length"],\
+            SETTINGS["snake_speed"])
+        #set the client snake
+        if SETTINGS["server"] or "test" in ARGV:
+            client_snake = Snake.Snake(game_canvas,\
+                [[5, 3], [5, 4], [5, 5]],\
+                (0, 0, 255),\
+                SETTINGS["snake_start_length"],\
+                SETTINGS["snake_speed"])
+        #set game
+        print_obj.on_line(f"score: {main_snake.size}")
         game_canvas.new_apple()
         game_canvas.update()
+        win = False
         #the game loop
         game_loop = True
         while game_loop:
+            #manage online
+            socket_client_data = None
+            if SETTINGS["server"]: #get data from client
+                try:
+                    socket_client_data = socket_conn.recv(1024).decode()
+                except socket.timeout:
+                    pass
             #manage the keyboard
-            game_event = GameEvents.handle_pygame_events(pygame.event.get(), pygame.key.get_pressed())
-            
-            if game_event.close_game:
+            game_events = GameEvents.handle_pygame_events(pygame.event.get(), pygame.key.get_pressed())
+            if game_events.close_game:
                 run = False
                 game_loop = False
-            elif game_event.restart:
+            elif game_events.restart:
                 game_loop = False
-            else: #continue the game
-                if game_event.pause:
-                    main_snake.stop()
-                if game_event.new_direction:
-                    main_snake.add_direction(game_event.new_direction)
-                    """
-                    if SETTINGS["online"] and not second_snake.direction:
-                        second_snake.direction = Snake.DIRECTION_DOWN
-                    """
-
-                if game_event.sprint:
-                    main_snake.speed = SETTINGS["snake_speed_run"]
-                else:
-                    main_snake.speed = SETTINGS["snake_speed"]
-                
+            else:#       continue the game - the game is playing
+                update_flag = False
                 #move the main snake
-                if main_snake.move(borders = SETTINGS["game_borders"]): # the snake moved
-                    if main_snake.alive:
-                        if main_snake.apple_eaten:
-                            game_canvas.new_apple()
-                            eat_sound.play()
-                            game_event.grow = True
-                        if game_event.grow:
-                            main_snake.size += 1
-                        #print the score
-                        print_obj.on_line(f"score: {main_snake.size} speed: {main_snake.speed}")
-                    if SETTINGS["god_mode"]:
-                        main_snake.draw_all()
-                    elif not main_snake.alive:
+                if manage_snake(main_snake, game_events, SETTINGS["god_mode"]):
+                    update_flag = True
+                    #print the score
+                    print_obj.on_line(f"score: {main_snake.size} speed: {main_snake.speed}")
+                    if main_snake.apple_eaten:
+                        eat_sound.play()
+                    if not main_snake.alive:
                         game_loop = False
+                
                 #move the second snake
-                """
-                if SETTINGS["online"] and second_snake.move(borders = SETTINGS["game_borders"]):
-                    if not second_snake.alive:
+                game_events.pause = False
+                if (SETTINGS["server"] or "test" in ARGV) and manage_snake(client_snake, game_events):
+                    update_flag = True
+                    if not client_snake.alive:
                         game_loop = False
-                    if second_snake.apple_eaten:
-                        game_canvas.new_apple()
-                """
-                #update the display
-                game_canvas.update()
+                
+                if update_flag: #if snake moved
+                    game_canvas.update()
+                    if not game_loop:
+                        win = main_snake.alive
                 sleep(0.01)
-        sleep(0.3)
-        print_obj.new_line(f"game {game_count}, score: {main_snake.size}")
+        if run: # time to see the game before reset
+            sleep(0.3)
+        #log the game
+        to_print = f"game {game_count}, score: {main_snake.size}"
+        if game_events.close_game:
+            to_print += ", Game closed"
+        elif game_events.restart:
+            to_print += ", Game restarted"
+        elif SETTINGS["server"] or "test" in ARGV:
+            if win:
+                to_print += ", I won"
+            else:
+                to_print += ", I lost"
+        print_obj.new_line(to_print)
+        
         game_count += 1
-    pygame.quit()
     return None
 
 if __name__ == "__main__" and RUN:
-    main()
+    pygame.init() #set pygame
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(" -proggram sttoped")
+    pygame.quit()

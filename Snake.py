@@ -11,10 +11,11 @@ DIRECTION_DOWN = 'd'
 HEAD_COLOR = (255, 0, 0)    #red
 #sizes
 BODY_SIZE = 0.9
-APPLE_ID = -1
+APPLE_ID = 2
+SNAKE_ID = 1
 
 class Snake:
-    def __init__(self, game_canvas, values_list, body_color, speed = 10, snake_id = 1):
+    def __init__(self, game_canvas, values_list, body_color, start_length = 5, speed = 10):
         """[summary]TODO
         
         Args:
@@ -24,13 +25,14 @@ class Snake:
             speed (int, optional): [description]. Defaults to 10.
             snake_id (int, optional): [description]. Defaults to 1.
         """
-        self.__canvas = game_canvas
-        self.id = snake_id
+        self.canvas = game_canvas
         self.game_table = game_canvas.game_table
         #set the snake in the game_table
         for i in values_list:
-            self.game_table[i[0]][i[1]] = self.id
+            self.game_table[i[0]][i[1]] = SNAKE_ID
         self.size = len(values_list)
+        if self.size < start_length:
+            self.size = start_length
         self.deque_list = deque(values_list)
         self.direction_list = deque()
         self.direction = None
@@ -46,8 +48,8 @@ class Snake:
     def draw_all(self):
         head = self.deque_list.pop()
         for i in self.deque_list:
-            self.__canvas.block(i, BODY_SIZE, self.body_color)
-        self.__canvas.block(head, BODY_SIZE, HEAD_COLOR)
+            self.canvas.block(i, BODY_SIZE, self.body_color)
+        self.canvas.block(head, BODY_SIZE, HEAD_COLOR)
         self.deque_list.append(head)
     
     def get_head(self):
@@ -92,10 +94,10 @@ class Snake:
                     last_place = self.deque_list.popleft()
                     self.game_table[last_place[0]][last_place[1]] = 0
                     #draw on the last place
-                    self.__canvas.block(last_place)
+                    self.canvas.block(last_place)
                 #remove the last head
                 head = self.get_head()
-                self.__canvas.block(head, BODY_SIZE, self.body_color)
+                self.canvas.block(head, BODY_SIZE, self.body_color)
                 #set the new direction
                 if self.direction_list:
                     self.direction = self.direction_list.popleft()
@@ -112,15 +114,15 @@ class Snake:
                 if not borders:
                     for i in range(2):
                         if head[i] < 0:
-                            head[i] = self.__canvas.table_size[i] - 1
-                        elif head[i] == self.__canvas.table_size[i]:
+                            head[i] = self.canvas.table_size[i] - 1
+                        elif head[i] == self.canvas.table_size[i]:
                             head[i] = 0
                 #check if the snake got out of the borders
                 if borders:
-                    self.alive = not (head[0] < 0 or head[0] == self.__canvas.table_size[0] or head[1] < 0 or head[1] == self.__canvas.table_size[1])
+                    self.alive = not (head[0] < 0 or head[0] == self.canvas.table_size[0] or head[1] < 0 or head[1] == self.canvas.table_size[1])
                 if not borders or (borders and self.alive):
                     #draw the new head
-                    self.__canvas.block(head, BODY_SIZE, HEAD_COLOR)
+                    self.canvas.block(head, BODY_SIZE, HEAD_COLOR)
                     #eat apple
                     self.apple_eaten = self.game_table[head[0]][head[1]] == APPLE_ID
                     
@@ -131,11 +133,10 @@ class Snake:
                         #check if alive
                         self.alive = self.game_table[head[0]][head[1]] == 0
                     #add the new head
-                    self.game_table[head[0]][head[1]] = self.id
+                    self.game_table[head[0]][head[1]] = SNAKE_ID
                     self.deque_list.append(head)
                 return True
         else:
             self.timer.reset()
         return False
-
 

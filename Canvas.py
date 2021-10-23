@@ -3,7 +3,7 @@ import random
 get_random_point = lambda range_x, range_y: (random.randrange(0,range_x), random.randrange(0,range_y))
 
 APPLE_SIZE = 0.8
-APPLE_ID = -1
+APPLE_ID = 2
 BLACK = (0,0,0)
 APPLE_COLOR = (0,255,0)     #green
 
