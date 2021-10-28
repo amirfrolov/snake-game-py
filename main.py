@@ -42,6 +42,19 @@ def manage_snake(snake, game_events, god_mode=False):
             snake.alive = True
     return snake_moved
 
+def log_game(print_obj, game_events, game_count, score, win_flag):
+    to_print = f"game {game_count}, score: {score}"
+    if game_events.close_game:
+        to_print += ", Game closed"
+    elif game_events.restart:
+        to_print += ", Game restarted"
+    elif SETTINGS["server"] or "test" in ARGV:
+        if win_flag:
+            to_print += ", I won"
+        else:
+            to_print += ", I lost"
+    print_obj.new_line(to_print)
+
 #---------- main ----------#
 def main():
     print_obj = PrintManager.PrintManager()
@@ -81,7 +94,7 @@ def main():
         print_obj.on_line(f"score: {main_snake.size}")
         game_canvas.new_apple()
         game_canvas.update()
-        win = False
+        win_flag = False
         #the game loop
         game_loop = True
         while game_loop:
@@ -121,23 +134,11 @@ def main():
                 if update_flag: #if snake moved
                     game_canvas.update()
                     if not game_loop:
-                        win = main_snake.alive
+                        win_flag = main_snake.alive
                 sleep(0.01)
         if run: # time to see the game before reset
             sleep(0.3)
-        #log the game
-        to_print = f"game {game_count}, score: {main_snake.size}"
-        if game_events.close_game:
-            to_print += ", Game closed"
-        elif game_events.restart:
-            to_print += ", Game restarted"
-        elif SETTINGS["server"] or "test" in ARGV:
-            if win:
-                to_print += ", I won"
-            else:
-                to_print += ", I lost"
-        print_obj.new_line(to_print)
-        
+        log_game(print_obj, game_events, game_count, main_snake.size, win_flag)
         game_count += 1
     return None
 
