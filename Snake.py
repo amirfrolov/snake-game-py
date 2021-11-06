@@ -3,10 +3,10 @@ from Timer import Timer
 import pygame
 import Canvas
 
-DIRECTION_RIGHT = 'r'
-DIRECTION_LEFT = 'l'
-DIRECTION_UP = 'u'
-DIRECTION_DOWN = 'd'
+DIRECTION_RIGHT = 1
+DIRECTION_LEFT = 2
+DIRECTION_UP = 3
+DIRECTION_DOWN = 4
 
 HEAD_COLOR = (255, 0, 0)    #red
 #sizes
@@ -46,12 +46,12 @@ class Snake:
         self.draw_all()
     
     def draw_all(self):
-        head = self.deque_list.pop()
-        for i in self.deque_list:
-            self.canvas.block(i, BODY_SIZE, self.body_color)
-        self.canvas.block(head, BODY_SIZE, HEAD_COLOR)
-        self.deque_list.append(head)
+        self.canvas.draw_snake(self.deque_list, self.body_color)
     
+    def get_draw_data(self):
+        #for online info
+        return f"({str(self.deque_list)[6:-1]},{str(self.body_color)})"
+
     def get_head(self):
         return list(self.deque_list[-1])
     
@@ -69,6 +69,7 @@ class Snake:
                 new_head[0]+=1
             if new_head != self.deque_list[-2]:
                 self.direction = new_direction
+                self.direction_list.clear()
                 self.direction_list.append(new_direction)
             return None
         if self.direction_list:
@@ -76,9 +77,9 @@ class Snake:
         else:
             tmp_direction = self.direction
         #if the snake trys to move in the direction he is moving
-        if (new_direction == 'r' or new_direction == 'l') and (tmp_direction == 'r' or tmp_direction == 'l'):
+        if (new_direction == DIRECTION_LEFT or new_direction == DIRECTION_RIGHT) and (tmp_direction == DIRECTION_LEFT or tmp_direction == DIRECTION_RIGHT):
             return None
-        elif (new_direction == 'u' or new_direction == 'd') and (tmp_direction == 'u' or tmp_direction == 'd'):
+        elif (new_direction == DIRECTION_UP or new_direction == DIRECTION_DOWN) and (tmp_direction == DIRECTION_UP or tmp_direction == DIRECTION_DOWN):
             return None
         self.direction_list.append(new_direction)
     
@@ -127,6 +128,7 @@ class Snake:
                     self.apple_eaten = self.game_table[head[0]][head[1]] == APPLE_ID
                     
                     if self.apple_eaten:
+                        self.canvas.remove_apple(head)
                         #self.size += 1
                         pass
                     else: #if the snake has eaten an apple the squere is not 0
@@ -139,4 +141,3 @@ class Snake:
         else:
             self.timer.reset()
         return False
-

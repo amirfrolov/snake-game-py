@@ -7,7 +7,24 @@ class GameEvents:
     grow = False            #flag
     pause = False           #flag
     sprint = False
-    new_direction = None    #a new direction
+    new_direction = 0    #a new direction
+
+    def __init__(self, data = None):
+        if type(data) == str:
+            self.close_game =   bool(int(data[0]))
+            self.restart =      bool(int(data[1]))
+            self.grow =         bool(int(data[2]))
+            self.pause =        bool(int(data[3]))
+            self.sprint =       bool(int(data[4]))
+            self.new_direction= int(data[5])
+    def export_to_str(self):
+        return \
+            str(int(self.close_game)) + \
+            str(int(self.restart)) + \
+            str(int(self.grow)) + \
+            str(int(self.pause)) + \
+            str(int(self.sprint)) + \
+            str(self.new_direction) 
 
 # retrun the GameEvents object with the actions to do
 def handle_pygame_events(event_list, pressed_keys):

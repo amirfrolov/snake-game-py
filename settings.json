@@ -1,6 +1,6 @@
 {
     "server" : false,
-    "port" : 42069,
+    "port" : 42075,
 
     "snake_speed" : 10,
     "snake_speed_run" : 20,
@@ -11,5 +11,6 @@
     "game_table" : [28,28],
     "game_borders" : false,
     "god_mode" : false,
-    "eat_sound" : "mixkit-unlock-game-notification-253.wav"
+    "eat_sound" : "mixkit-unlock-game-notification-253.wav",
+    "sound_volume" : 0
 }
