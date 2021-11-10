@@ -1,17 +1,19 @@
 {
-    "state" : 0,
+    "state" : 1,
     "port" : 42077,
 
     "snake_speed" : 10,
     "snake_speed_run" : 20,
     "snake_start_length" : 5,
-    "snake_start_posotions" : [[2, 3], [2, 4], [2, 5]],
+    "sound_volume" : 1,
     "snake_color" : [255,255,255],
+    "snake_start_posotions" : [[2, 3], [2, 4], [2, 5]],
     "game_screen" : [800, 800],
     "game_table" : [28,28],
     "game_borders" : false,
     "god_mode" : false,
+
     "eat_sound" : "mixkit-unlock-game-notification-253.wav",
-    "sound_volume" : 1,
+    "game_icon" : "Snake-icon.png",
     "apples_number" : 1
 }

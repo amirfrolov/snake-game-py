@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+﻿#!/usr/bin/python3
 import os
 import sys
 from os.path import abspath #for opening files
@@ -88,6 +88,7 @@ def main():
     
     #print credits section
     print("Suonds from: https://mixkit.co/free-sound-effects/game/")
+    print("Icon from: https://iconarchive.com/show/button-ui-requests-13-icons-by-blackvariant/Snake-icon.html")
     #print instructions section
     print_obj.title("help")
     print_obj.print_file(abspath("help.txt"))
@@ -113,7 +114,11 @@ def main():
         eat_sound.set_volume(SETTINGS["sound_volume"])
         eat_sound.play()
         #set canvas
-        game_canvas = Canvas.Canvas(SETTINGS["game_table"], SETTINGS["game_screen"], "Snake Game" + window_title_adder)
+        game_canvas = Canvas.Canvas(\
+            SETTINGS["game_table"],\
+            SETTINGS["game_screen"],\
+            "Snake Game" + window_title_adder,\
+            abspath(SETTINGS["game_icon"]))
         #set game
         game_count = 1
         while run:

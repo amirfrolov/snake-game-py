@@ -11,10 +11,14 @@ BLACK = (0,0,0)
 APPLE_COLOR = (0,255,0)     #green
 
 class Canvas:
-    def __init__(self, table_size, screen_size, window_title):
-        pygame.display.set_caption(window_title)
+    def __init__(self, table_size, screen_size, window_title, window_icon_path = None):
         self.table_size = table_size
         self.__screen_size = screen_size
+        if window_title:
+            pygame.display.set_caption(window_title)
+        if window_icon_path:
+            program_icon = pygame.image.load(window_icon_path)
+            pygame.display.set_icon(program_icon)
         self.__window = pygame.display.set_mode(screen_size)
         self.clear()
         self.game_table = [[0 for i in range(table_size[1])] for j in range(table_size[0])]
