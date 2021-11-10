@@ -1,3 +1,5 @@
+SPLIT_LINE_LEN = 20
+
 class PrintManager:
     __last_print_line_len = 0
     def clear_line(self):
@@ -14,6 +16,21 @@ class PrintManager:
     def new_line(self, *argv):
         str_to_print = " ".join([str(i) for i in argv])
         self.line(str_to_print, True)
+    def splitter(self):
+        self.new_line('-' * SPLIT_LINE_LEN)
+    def title(self, title):
+        title_len = len(title)
+        add_one_splitter = not bool(int(title_len/2))
+        title_splitter = '-' * int((SPLIT_LINE_LEN - len(title))/2)
+        str_to_print = title_splitter
+        str_to_print += title
+        str_to_print += title_splitter
+        if add_one_splitter:
+            str_to_print += '-' 
+        self.new_line(str_to_print)
+    def print_file(self, file_path):
+        with open(file_path, 'r') as f:
+            print(f.read())
 
 
 #colors - https://www.geeksforgeeks.org/print-colors-python-terminal/

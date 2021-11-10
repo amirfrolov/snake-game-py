@@ -2,17 +2,15 @@ import os
 import sys
 import json
 
-
-ARGV = list()
-
-def get_settings(settings_file_path):
+def get_settings_and_argv(settings_file_path):
     settings_result = None
     try:
-        with open(os.path.abspath(settings_file_path), "r") as settings_file:
+        with open(settings_file_path, "r") as settings_file:
             settings_result = json.loads(settings_file.read())
     except FileNotFoundError:
         print("settings.json file not found.")
-
+    
+    result_argv = list()
     argv = sys.argv[1:]
     settings_argv = list()
     flag = False
@@ -22,7 +20,7 @@ def get_settings(settings_file_path):
         if flag:
             settings_argv.append(i)
         else:
-            ARGV.append(i) 
+            result_argv.append(i) 
     
     i_max = len(settings_argv)
     try:
@@ -40,11 +38,9 @@ def get_settings(settings_file_path):
             i+=1
     except IndexError:
         pass
-    return settings_result
-
-#get the settings from settings.json file
-SETTINGS = get_settings("settings.json")
+    return settings_result, result_argv
 
 if __name__=="__main__":
+    SETTINGS = get_settings('settings.json')
     print(ARGV)
     print(SETTINGS)

@@ -26,10 +26,9 @@ class Snake:
             snake_id (int, optional): [description]. Defaults to 1.
         """
         self.canvas = game_canvas
-        self.game_table = game_canvas.game_table
         #set the snake in the game_table
         for i in values_list:
-            self.game_table[i[0]][i[1]] = SNAKE_ID
+            self.canvas.game_table[i[0]][i[1]] = SNAKE_ID
         self.size = len(values_list)
         if self.size < start_length:
             self.size = start_length
@@ -44,7 +43,7 @@ class Snake:
         self.alive = True
         self.apple_eaten = False
         self.draw_all()
-    
+
     def draw_all(self):
         self.canvas.draw_snake(self.deque_list, self.body_color)
     
@@ -93,7 +92,7 @@ class Snake:
                 if self.size == len(self.deque_list):
                     #delete the last place
                     last_place = self.deque_list.popleft()
-                    self.game_table[last_place[0]][last_place[1]] = 0
+                    self.canvas.game_table[last_place[0]][last_place[1]] = 0
                     #draw on the last place
                     self.canvas.block(last_place)
                 #remove the last head
@@ -125,7 +124,7 @@ class Snake:
                     #draw the new head
                     self.canvas.block(head, BODY_SIZE, HEAD_COLOR)
                     #eat apple
-                    self.apple_eaten = self.game_table[head[0]][head[1]] == APPLE_ID
+                    self.apple_eaten = self.canvas.game_table[head[0]][head[1]] == APPLE_ID
                     
                     if self.apple_eaten:
                         self.canvas.remove_apple(head)
@@ -133,9 +132,9 @@ class Snake:
                         pass
                     else: #if the snake has eaten an apple the squere is not 0
                         #check if alive
-                        self.alive = self.game_table[head[0]][head[1]] == 0
+                        self.alive = self.canvas.game_table[head[0]][head[1]] == 0
                     #add the new head
-                    self.game_table[head[0]][head[1]] = SNAKE_ID
+                    self.canvas.game_table[head[0]][head[1]] = SNAKE_ID
                     self.deque_list.append(head)
                 return True
         else:

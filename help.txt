@@ -1,0 +1,7 @@
+ctrl+c to exit the proggram
+Change the proggrams settings in the 'settings.json' file
+Optional proggram arguments:
+0. [defult]     - run the proggram offline for one player
+1. multy        - run the proggram for 2 players offline
+2. server       - run the proggram as a server
+To run one of the states by defult change the 'state' value in the 'settings.json' file to the state's number

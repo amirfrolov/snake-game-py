@@ -1,6 +1,6 @@
 {
-    "server" : false,
-    "port" : 42075,
+    "state" : 0,
+    "port" : 42077,
 
     "snake_speed" : 10,
     "snake_speed_run" : 20,
@@ -12,5 +12,6 @@
     "game_borders" : false,
     "god_mode" : false,
     "eat_sound" : "mixkit-unlock-game-notification-253.wav",
-    "sound_volume" : 0
+    "sound_volume" : 1,
+    "apples_number" : 1
 }
