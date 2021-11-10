@@ -22,7 +22,8 @@ class PrintManager:
         title_len = len(title)
         add_one_splitter = not bool(int(title_len/2))
         title_splitter = '-' * int((SPLIT_LINE_LEN - len(title))/2)
-        str_to_print = title_splitter
+        str_to_print = '\n'
+        str_to_print += title_splitter
         str_to_print += title
         str_to_print += title_splitter
         if add_one_splitter:

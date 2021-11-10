@@ -1,0 +1,3 @@
+Snake movment keys:
+Movement - a,s,d,w and arrow keys
+Sprint - space and left shift key

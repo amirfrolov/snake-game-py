@@ -1,0 +1,6 @@
+White snake movment keys:
+Movement - a,s,d,w keys
+Sprint - space key
+Blue snake movment keys:
+Movement - arrow keys
+Sprint - left shift

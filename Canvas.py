@@ -11,12 +11,12 @@ BLACK = (0,0,0)
 APPLE_COLOR = (0,255,0)     #green
 
 class Canvas:
-    def __init__(self, table_size, screen_size, caption):
+    def __init__(self, table_size, screen_size, window_title):
+        pygame.display.set_caption(window_title)
         self.table_size = table_size
         self.__screen_size = screen_size
         self.__window = pygame.display.set_mode(screen_size)
         self.clear()
-        pygame.display.set_caption(caption)
         self.game_table = [[0 for i in range(table_size[1])] for j in range(table_size[0])]
         self.apples = deque()
         self.update_flag = False

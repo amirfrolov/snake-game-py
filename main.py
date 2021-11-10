@@ -80,20 +80,29 @@ def set_server_and_get_client():
 def main():
     run = True
     pygame.init() #set pygame
-    #credits
+    #manage argv
+    if "multy" in ARGV:
+        SETTINGS["state"] = STATE_MULTYPLAYER
+    elif "server" in ARGV:
+        SETTINGS["state"] = STATE_SERVER
+    
+    #print credits section
     print("Suonds from: https://mixkit.co/free-sound-effects/game/")
-    print_obj.splitter()
+    #print instructions section
+    print_obj.title("help")
     print_obj.print_file(abspath("help.txt"))
+    print_obj.title("instructions")
+    if SETTINGS["state"] == STATE_MULTYPLAYER:
+        print_obj.print_file("multyplayer_instructions.txt")
+    else:
+        print_obj.print_file("one_snake_instructions.txt")
+    
     #help mode
     if any([i in sys.argv[1:] for i in ["-h", "--help"]]):
         run = False
+    
     if run:
         window_title_adder = ""
-        #manage argv
-        if "multy" in ARGV:
-            SETTINGS["state"] = STATE_MULTYPLAYER
-        elif "server" in ARGV:
-            SETTINGS["state"] = STATE_SERVER
         #set online
         if SETTINGS['state'] == STATE_SERVER: # server socket
             window_title_adder += " - Server"
@@ -131,26 +140,36 @@ def main():
             #the game loop
             game_loop = True
             while game_loop:
-                on_line_print_str = ""
+                #set pygame values
+                pygame_events = pygame.event.get()
+                pygame_pressed_keys = pygame.key.get_pressed()
                 #manage online
                 if SETTINGS["state"] == STATE_SERVER: #get data from client
                     connected, socket_client_data = client_sock.recv()
                     if not connected:
                         run = False
                         print_obj.new_line("Client disconnected.")
-                        break
                     elif socket_client_data:
                         client_events = GameEvents.GameEvents(socket_client_data)
+                elif SETTINGS["state"] == STATE_MULTYPLAYER:
+                    client_events = GameEvents.handle_pygame_events(\
+                        pygame_events,\
+                        pygame_pressed_keys,\
+                        letter_keys=False)
                 #manage the keyboard
-                game_events = GameEvents.handle_pygame_events(pygame.event.get(), pygame.key.get_pressed())
+                game_events = GameEvents.handle_pygame_events(\
+                    pygame_events,\
+                    pygame_pressed_keys,\
+                    arrow_keys = SETTINGS["state"] != STATE_MULTYPLAYER)
                 if game_events.close_game:
                     run = False
-                    game_loop = False
-                    break
                 elif game_events.restart:
                     game_loop = False
-                
-                if game_loop:#       continue the game - the game is playing
+                #exit game_loop if run is False
+                if not run:
+                    game_loop = False
+                #       continue the game - the game is playing
+                if game_loop:
                     #move the main snake
                     if manage_snake(main_snake, game_events, SETTINGS["god_mode"]):
                         update_flag = True
@@ -174,8 +193,10 @@ def main():
                         win_flag = main_snake.alive
                         update_flag = False
                 if game_loop:
+                    #time to sleep before every frame
                     sleep(0.01)
-            if run: # time to see the game before reset
+            if run:
+                # time to see the game before reset
                 sleep(0.3)
             log_game(game_events, game_count, main_snake.size, win_flag)
             game_count += 1
