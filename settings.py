@@ -40,7 +40,25 @@ def get_settings_and_argv(settings_file_path):
         pass
     return settings_result, result_argv
 
+class settings_obj:
+    def __init__(self, path):
+        self.data = {}
+        self.argv = []
+        self.setup_from_file(path)
+    
+    def setup_from_file(self, path):
+        self.data, self.argv = get_settings_and_argv(path)
+    
+    def get_argv(self, index):
+        result = ""
+        if len(self.argv) > index:
+            result = self.argv[index]
+        return result
+    
+    def in_argv(self, value):
+        return value in self.argv
+
+    
+
 if __name__=="__main__":
-    SETTINGS = get_settings('settings.json')
-    print(ARGV)
-    print(SETTINGS)
+    pass

@@ -14,10 +14,10 @@ import GameEvents
 import PrintManager
 import TCP_manager
 from TCP_manager import MY_IP
-from settings import get_settings_and_argv
-#get the settings from settings.json file
-SETTINGS, ARGV = get_settings_and_argv(abspath("settings.json"))
+from settings import settings_obj
 #define
+SETTINGS = settings_obj(abspath("settings.json"))
+
 STATE_SERVER = 2
 STATE_MULTYPLAYER = 1
 print_obj = PrintManager.PrintManager()
@@ -28,9 +28,9 @@ def manage_snake(snake, game_events, god_mode=False):
     if game_events.new_direction:
         snake.add_direction(game_events.new_direction)
     if game_events.sprint:
-        snake.speed = SETTINGS["snake_speed_run"]
+        snake.speed = SETTINGS.data["snake_speed_run"]
     else:
-        snake.speed = SETTINGS["snake_speed"]
+        snake.speed = SETTINGS.data["snake_speed"]
     
     grow = game_events.grow
     snake_moved = snake.move()
@@ -52,7 +52,7 @@ def log_game(game_events, game_count, score, win_flag):
         to_print += ", Game closed"
     elif game_events.restart:
         to_print += ", Game restarted"
-    elif not SETTINGS['state']:
+    elif not SETTINGS.data['state']:
         if win_flag:
             to_print += ", I won"
         else:
@@ -62,14 +62,14 @@ def log_game(game_events, game_count, score, win_flag):
 def set_server_and_get_client():
     online_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     online_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #set socket as reusable
-    online_socket.bind((MY_IP, SETTINGS["port"]))
+    online_socket.bind((MY_IP, SETTINGS.data["port"]))
     TCP_manager.SOCKETS_TO_CLOSE.append(online_socket)
     online_socket.listen()
     print_obj.title("server")
     print("Server ip:", MY_IP)
     print("To connect run the 'client.py' file with the server ip. Example:")
     print(f"python3 client.py {MY_IP}")
-    if "test" in ARGV:
+    if "test" in SETTINGS.argv:
         print("Connecting to the server localy... ('test' flag)")
         os.popen(f"sleep 0.5 && python3 client.py {MY_IP} >> client_out.txt")
     else:
@@ -77,8 +77,8 @@ def set_server_and_get_client():
     return TCP_manager.TCP_manager(online_socket.accept()[0])
 def get_argv(index):
     result = ""
-    if len(ARGV) > index:
-        result = ARGV[index]
+    if len(SETTINGS.argv) > index:
+        result = SETTINGS.argv[index]
     return result
 
 #---------- main ----------#
@@ -86,10 +86,10 @@ def main():
     run = True
     pygame.init() #set pygame
     #manage argv
-    if get_argv(0) == "1" or "multy" in ARGV:
-        SETTINGS["state"] = STATE_MULTYPLAYER
-    elif get_argv(0) == "2" or "server" in ARGV:
-        SETTINGS["state"] = STATE_SERVER
+    if SETTINGS.get_argv(0) == "1" or SETTINGS.in_argv("multy"):
+        SETTINGS.data["state"] = STATE_MULTYPLAYER
+    elif SETTINGS.get_argv(0) == "2" or SETTINGS.in_argv("server"):
+        SETTINGS.data["state"] = STATE_SERVER
     
     #print credits section
     print("Suonds from: https://mixkit.co/free-sound-effects/game/")
@@ -98,7 +98,7 @@ def main():
     print_obj.title("help")
     print_obj.print_file(abspath("help.txt"))
     print_obj.title("instructions")
-    if SETTINGS["state"] == STATE_MULTYPLAYER:
+    if SETTINGS.data["state"] == STATE_MULTYPLAYER:
         print_obj.print_file("multyplayer_instructions.txt")
     else:
         print_obj.print_file("one_snake_instructions.txt")
@@ -110,40 +110,40 @@ def main():
     if run:
         window_title_adder = ""
         #set online
-        if SETTINGS['state'] == STATE_SERVER: # server socket
+        if SETTINGS.data['state'] == STATE_SERVER: # server socket
             window_title_adder += " - Server"
             client_sock = set_server_and_get_client()
         print_obj.title("game log")
         #set sounds
-        eat_sound = pygame.mixer.Sound(abspath(SETTINGS['eat_sound']))
-        eat_sound.set_volume(SETTINGS["sound_volume"])
+        eat_sound = pygame.mixer.Sound(abspath(SETTINGS.data['eat_sound']))
+        eat_sound.set_volume(SETTINGS.data["sound_volume"])
         eat_sound.play()
         #set canvas
         game_canvas = Canvas.Canvas(\
-            SETTINGS["game_table"],\
-            SETTINGS["game_screen"],\
+            SETTINGS.data["game_table"],\
+            SETTINGS.data["game_screen"],\
             "Snake Game" + window_title_adder,\
-            abspath(SETTINGS["game_icon"]))
+            abspath(SETTINGS.data["game_icon"]))
         #set game
         game_count = 1
         while run:
             game_canvas.reset()
             main_snake = Snake.Snake(game_canvas,\
-                SETTINGS["snake_start_posotions"],\
-                SETTINGS['snake_color'],\
-                SETTINGS["snake_start_length"],\
-                SETTINGS["snake_speed"])
+                SETTINGS.data["snake_start_posotions"],\
+                SETTINGS.data['snake_color'],\
+                SETTINGS.data["snake_start_length"],\
+                SETTINGS.data["snake_speed"])
             #set the client snake
-            if SETTINGS["state"]:
+            if SETTINGS.data["state"]:
                 client_snake = Snake.Snake(game_canvas,\
                     [[5, 3], [5, 4], [5, 5]],\
                     [0, 0, 255],\
-                    SETTINGS["snake_start_length"],\
-                    SETTINGS["snake_speed"])
+                    SETTINGS.data["snake_start_length"],\
+                    SETTINGS.data["snake_speed"])
                 client_events = GameEvents.GameEvents()
             #set game
             print_obj.on_line(f"score: {main_snake.size}")
-            for i in range(SETTINGS["apples_number"]):
+            for i in range(SETTINGS.data["apples_number"]):
                 game_canvas.new_apple()
             update_flag = True
             win_flag = False
@@ -154,14 +154,14 @@ def main():
                 pygame_events = pygame.event.get()
                 pygame_pressed_keys = pygame.key.get_pressed()
                 #manage online
-                if SETTINGS["state"] == STATE_SERVER: #get data from client
+                if SETTINGS.data["state"] == STATE_SERVER: #get data from client
                     connected, socket_client_data = client_sock.recv()
                     if not connected:
                         run = False
                         print_obj.new_line("Client disconnected.")
                     elif socket_client_data:
                         client_events = GameEvents.GameEvents(socket_client_data)
-                elif SETTINGS["state"] == STATE_MULTYPLAYER:
+                elif SETTINGS.data["state"] == STATE_MULTYPLAYER:
                     client_events = GameEvents.handle_pygame_events(\
                         pygame_events,\
                         pygame_pressed_keys,\
@@ -170,7 +170,7 @@ def main():
                 game_events = GameEvents.handle_pygame_events(\
                     pygame_events,\
                     pygame_pressed_keys,\
-                    arrow_keys = SETTINGS["state"] != STATE_MULTYPLAYER)
+                    arrow_keys = SETTINGS.data["state"] != STATE_MULTYPLAYER)
                 if game_events.close_game:
                     run = False
                 elif game_events.restart:
@@ -181,7 +181,7 @@ def main():
                 #       continue the game - the game is playing
                 if game_loop:
                     #move the main snake
-                    if manage_snake(main_snake, game_events, SETTINGS["god_mode"]):
+                    if manage_snake(main_snake, game_events, SETTINGS.data["god_mode"]):
                         update_flag = True
                         if main_snake.apple_eaten:
                             eat_sound.play()
@@ -189,14 +189,14 @@ def main():
                             game_loop = False
                     
                     #move the second snake
-                    if SETTINGS["state"] and manage_snake(client_snake, client_events, SETTINGS["god_mode"]):
+                    if SETTINGS.data["state"] and manage_snake(client_snake, client_events, SETTINGS.data["god_mode"]):
                         update_flag = True
                         if not client_snake.alive:
                             game_loop = False
                     
                     if update_flag:
                         game_canvas.update()
-                        if SETTINGS["state"] == STATE_SERVER:#send data to client
+                        if SETTINGS.data["state"] == STATE_SERVER:#send data to client
                             data_to_send = f'[[{main_snake.get_draw_data()},{client_snake.get_draw_data()}],{str(game_canvas.apples)[6:-1]}]'
                             client_sock.send(data_to_send)
                         print_obj.on_line(f"score: {main_snake.size} speed: {main_snake.speed}")

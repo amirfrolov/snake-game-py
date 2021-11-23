@@ -12,32 +12,32 @@ import Canvas
 import GameEvents
 import PrintManager
 import TCP_manager
-from settings import get_settings_and_argv
+from settings import settings_obj
 #define
-SETTINGS, ARGV = get_settings_and_argv("settings.json") #get the settings from settings.json file
 print_obj = PrintManager.PrintManager()
 #---------- main ----------#
 def main():
+    settings = settings_obj(abspath("settings.json"))
     run = True
     #set online
     try:
-        if len(ARGV):
-            host_ip = ARGV[0]
+        if len(settings.argv):
+            host_ip = settings.argv[0]
         else:
             print("Not found the server ip in the argumants.")
             print("To connect to the server instantly send the server ip in the argumants.")
             print("Example: python3 client.py [server ip]")
             host_ip = input("Enter the server ip: ")
-        server_tcp_obj = TCP_manager.TCP_manager(connect_addr=(host_ip, SETTINGS["port"]))
+        server_tcp_obj = TCP_manager.TCP_manager(connect_addr=(host_ip, settings.data["port"]))
     except socket.timeout:
         print(f"Server time out [{host_ip}]")
         return None
     #set sounds
-    eat_sound = pygame.mixer.Sound(abspath(SETTINGS['eat_sound']))
-    eat_sound.set_volume(SETTINGS["sound_volume"])
+    eat_sound = pygame.mixer.Sound(abspath(settings.data['eat_sound']))
+    eat_sound.set_volume(settings.data["sound_volume"])
     eat_sound.play()
     #set canvas
-    game_canvas = Canvas.Canvas(SETTINGS["game_table"], SETTINGS["game_screen"], "Snake Game - Client")
+    game_canvas = Canvas.Canvas(settings.data["game_table"], settings.data["game_screen"], "Snake Game - Client")
     #set game
     game_count = 1
     last_sent_data = ""
@@ -79,7 +79,7 @@ def main():
         sleep(1/100)
     return None
 
-if __name__ == "__main__" and SETTINGS:
+if __name__ == "__main__":
     print("Suonds from: https://mixkit.co/free-sound-effects/game/")
     pygame.init()  #set pygame
     print('-' * 20)
