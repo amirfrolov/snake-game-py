@@ -75,15 +75,20 @@ def set_server_and_get_client():
     else:
         print("Waitting for connection...")
     return TCP_manager.TCP_manager(online_socket.accept()[0])
+def get_argv(index):
+    result = ""
+    if len(ARGV) > index:
+        result = ARGV[index]
+    return result
 
 #---------- main ----------#
 def main():
     run = True
     pygame.init() #set pygame
     #manage argv
-    if "multy" in ARGV:
+    if get_argv(0) == "1" or "multy" in ARGV:
         SETTINGS["state"] = STATE_MULTYPLAYER
-    elif "server" in ARGV:
+    elif get_argv(0) == "2" or "server" in ARGV:
         SETTINGS["state"] = STATE_SERVER
     
     #print credits section
