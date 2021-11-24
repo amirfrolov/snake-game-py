@@ -23,6 +23,16 @@ STATE_MULTYPLAYER = 1
 print_obj = PrintManager.PrintManager()
 
 def manage_snake(snake, game_events, god_mode=False):
+    """apply the game_events and move the snake acord
+
+    Args:
+        snake (Snake): the snake object
+        game_events (): [description]
+        god_mode (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        bool: if the snake moved
+    """
     if game_events.pause:
         snake.stop()
     if game_events.new_direction:
@@ -47,6 +57,7 @@ def manage_snake(snake, game_events, god_mode=False):
     return snake_moved
 
 def log_game(game_events, game_count, score, win_flag):
+    """logs the game with the variables"""
     to_print = f"game {game_count}, score: {score}"
     if game_events.close_game:
         to_print += ", Game closed"
@@ -59,7 +70,12 @@ def log_game(game_events, game_count, score, win_flag):
             to_print += ", I lost"
     print(to_print)
 
-def set_server_and_get_client():
+def set_server():
+    """sets the server 
+
+    Returns:
+        TCP_manager.TCP_manager: tcp server object
+    """
     online_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     online_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #set socket as reusable
     online_socket.bind((MY_IP, SETTINGS.data["port"]))
@@ -75,11 +91,6 @@ def set_server_and_get_client():
     else:
         print("Waitting for connection...")
     return TCP_manager.TCP_manager(online_socket.accept()[0])
-def get_argv(index):
-    result = ""
-    if len(SETTINGS.argv) > index:
-        result = SETTINGS.argv[index]
-    return result
 
 #---------- main ----------#
 def main():
@@ -112,7 +123,7 @@ def main():
         #set online
         if SETTINGS.data['state'] == STATE_SERVER: # server socket
             window_title_adder += " - Server"
-            client_sock = set_server_and_get_client()
+            client_sock = set_server()
         print_obj.title("game log")
         #set sounds
         eat_sound = pygame.mixer.Sound(abspath(SETTINGS.data['eat_sound']))
