@@ -61,4 +61,5 @@ class settings_obj:
     
 
 if __name__=="__main__":
-    pass
+    settings = settings_obj("settings.json")
+    print(settings.argv)

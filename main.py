@@ -2,7 +2,7 @@
 import os
 import sys
 from os.path import abspath #for opening files
-os.chdir(os.getcwd()) #set the path for opening files
+os.chdir(os.path.dirname(__file__)) #set the path for opening files
 from time import sleep
 import socket #for the online
 import pygame
