@@ -11,7 +11,7 @@
     "game_screen" : [800, 800],
     "game_table" : [28,28],
     "game_borders" : false,
-    "god_mode" : false,
+    "god_mode" : true,
 
     "eat_sound" : "mixkit-unlock-game-notification-253.wav",
     "game_icon" : "Snake-icon.png",
